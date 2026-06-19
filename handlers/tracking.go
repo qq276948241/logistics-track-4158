@@ -13,8 +13,8 @@ import (
 
 func GetWaybillTrackings(c *gin.Context) {
 	trackingNumber := c.Param("tracking_number")
-	if trackingNumber == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Tracking number is required"})
+	if ok, msg := ValidateTrackingNumber(trackingNumber); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 

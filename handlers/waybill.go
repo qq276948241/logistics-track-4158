@@ -17,6 +17,15 @@ func CreateWaybill(c *gin.Context) {
 		return
 	}
 
+	if ok, msg := ValidateTrackingNumber(req.TrackingNumber); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		return
+	}
+	if ok, msg := ValidateCarrier(req.Carrier); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		return
+	}
+
 	var existing models.Waybill
 	err := models.DB.Where("tracking_number = ?", req.TrackingNumber).First(&existing).Error
 	if err == nil {
