@@ -34,11 +34,21 @@ type Waybill struct {
 	ID             uint           `gorm:"primaryKey" json:"id"`
 	TrackingNumber string         `gorm:"size:50;uniqueIndex;not null" json:"tracking_number"`
 	Carrier        string         `gorm:"size:50;not null" json:"carrier"`
+	Status         string         `gorm:"size:50;not null;default:待揽收" json:"status"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 	Trackings      []Tracking     `json:"trackings,omitempty"`
 }
+
+const (
+	WaybillStatusPending   = "待揽收"
+	WaybillStatusCollected = "已揽收"
+	WaybillStatusInTransit = "运输中"
+	WaybillStatusArrived   = "到达目的地"
+	WaybillStatusDelivering = "派送中"
+	WaybillStatusSigned    = "已签收"
+)
 
 type Tracking struct {
 	ID             uint           `gorm:"primaryKey" json:"id"`
@@ -70,6 +80,7 @@ type WaybillResponse struct {
 	ID             uint       `json:"id"`
 	TrackingNumber string     `json:"tracking_number"`
 	Carrier        string     `json:"carrier"`
+	Status         string     `json:"status"`
 	CreatedAt      time.Time  `json:"created_at"`
 	Trackings      []Tracking `json:"trackings"`
 }

@@ -24,6 +24,7 @@ func main() {
 	api := r.Group("/api")
 	api.Use(middleware.AuthMiddleware())
 	{
+		api.GET("/waybills", handlers.ListWaybills)
 		api.POST("/waybills", handlers.CreateWaybill)
 		api.GET("/waybills/:tracking_number/trackings", handlers.GetWaybillTrackings)
 	}

@@ -60,6 +60,7 @@ func CreateWaybill(c *gin.Context) {
 	waybill := models.Waybill{
 		TrackingNumber: req.TrackingNumber,
 		Carrier:        req.Carrier,
+		Status:         models.WaybillStatusPending,
 	}
 
 	if err := models.DB.Create(&waybill).Error; err != nil {
@@ -71,6 +72,7 @@ func CreateWaybill(c *gin.Context) {
 		"id":              waybill.ID,
 		"tracking_number": waybill.TrackingNumber,
 		"carrier":         waybill.Carrier,
+		"status":          waybill.Status,
 		"created_at":      waybill.CreatedAt,
 	})
 }
@@ -102,10 +104,16 @@ func GetWaybillTrackings(c *gin.Context) {
 		trackings = generateMockTrackings(waybill.ID)
 	}
 
+	if waybill.Status == models.WaybillStatusPending {
+		models.DB.Model(&waybill).Update("status", models.WaybillStatusSigned)
+		waybill.Status = models.WaybillStatusSigned
+	}
+
 	response := models.WaybillResponse{
 		ID:             waybill.ID,
 		TrackingNumber: waybill.TrackingNumber,
 		Carrier:        waybill.Carrier,
+		Status:         waybill.Status,
 		CreatedAt:      waybill.CreatedAt,
 		Trackings:      trackings,
 	}
@@ -143,4 +151,36 @@ func generateMockTrackings(waybillID uint) []models.Tracking {
 		trackings = append(trackings, tracking)
 	}
 	return trackings
+}
+
+func ListWaybills(c *gin.Context) {
+	status := c.Query("status")
+
+	query := models.DB.Model(&models.Waybill{})
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	var waybills []models.Waybill
+	if err := query.Order("created_at DESC").Find(&waybills).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query waybills"})
+		return
+	}
+
+	results := make([]gin.H, 0, len(waybills))
+	for _, w := range waybills {
+		results = append(results, gin.H{
+			"id":              w.ID,
+			"tracking_number": w.TrackingNumber,
+			"carrier":         w.Carrier,
+			"status":          w.Status,
+			"created_at":       w.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total":  len(results),
+		"status": status,
+		"data":   results,
+	})
 }
